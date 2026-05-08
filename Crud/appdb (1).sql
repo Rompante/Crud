@@ -3,10 +3,11 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: db
--- Tempo de geração: 08-Maio-2026 às 15:42
+-- Tempo de geração: 08-Maio-2026 às 16:02
 -- Versão do servidor: 8.4.9
 -- versão do PHP: 8.3.26
 
+SET FOREIGN_KEY_CHECKS=0;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
@@ -34,16 +35,17 @@ CREATE TABLE `clientes` (
   `id` int NOT NULL,
   `nome` varchar(100) DEFAULT NULL,
   `email` varchar(100) DEFAULT NULL,
-  `telefone` varchar(20) DEFAULT NULL
+  `telefone` varchar(20) DEFAULT NULL,
+  `nif` varchar(15) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Extraindo dados da tabela `clientes`
 --
 
-INSERT INTO `clientes` (`id`, `nome`, `email`, `telefone`) VALUES
-(1, 'Tomas', 'abcd@sapo.pt', '123456789'),
-(2, 'Davi ', 'nascimento@sapo.pt', '234567891');
+INSERT INTO `clientes` (`id`, `nome`, `email`, `telefone`, `nif`) VALUES
+(1, 'Tomas', 'abcd@sapo.pt', '123456789', ''),
+(2, 'Davi ', 'nascimento@sapo.pt', '234567891', '');
 
 --
 -- Índices para tabelas despejadas
@@ -64,6 +66,7 @@ ALTER TABLE `clientes`
 --
 ALTER TABLE `clientes`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+SET FOREIGN_KEY_CHECKS=1;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
