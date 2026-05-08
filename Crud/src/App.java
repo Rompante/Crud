@@ -9,7 +9,7 @@ import java.sql.Statement;
 public class App {
     public static void main(String[] args) throws Exception {
         HttpServer server = HttpServer.create(
-            new InetSocketAddress(8080), 0
+            new InetSocketAddress(8082), 0
         );
 
 
@@ -432,7 +432,84 @@ public class App {
                 exchange.getResponseBody().write(resp.getBytes());
                 exchange.close();
             }
-        }); 
+        });
+        
+        
+        // ELIMINAR CLIENTE
+        server.createContext("/apagar", exchange -> {
+            StringBuilder html = new StringBuilder();
+
+            try {
+                String query = exchange.getRequestURI().getQuery();
+
+                if (query == null || !query.contains("id=")) {
+                    throw new Exception("ID inválido");
+                }
+
+                int id = Integer.parseInt(query.split("=")[1]);
+                Connection con = LigacaoBD.ligar();
+
+                if (con == null) {
+                    throw new Exception("Ligação à BD falhou!");
+                }
+
+                String sql = "DELETE FROM clientes WHERE id=?";
+                PreparedStatement ps = con.prepareStatement(sql);
+
+                ps.setInt(1, id);
+                int rows = ps.executeUpdate();
+                ps.close();
+                con.close();
+
+                html.append("""
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <style>
+                            body { font-family: Arial; }
+                            a { text-decoration: none; }
+                        </style>
+                    </head>
+                    <body>
+                """);
+
+                if (rows > 0) {
+                    html.append("""
+                        <h2>Cliente apagado com sucesso!</h2>
+                        <a href='/clientes'>Voltar à lista</a>
+                    """);
+                } else {
+                    html.append("""
+                        <h2>! Cliente não encontrado!</h2>
+                        <a href='/clientes'>Voltar</a>
+                    """);
+                }
+
+                html.append("""
+                    </body>
+                    </html>
+                """);
+            } catch (Exception e) {
+                e.printStackTrace();
+                html.append("""
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                    </head>
+                    <body>
+
+                    <h2>!!! Erro ao apagar cliente!</h2>
+                    <a href='/clientes'>Voltar</a>
+                    </body>
+                    </html>
+                """);
+            }
+
+            exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
+            exchange.sendResponseHeaders(200, html.toString().getBytes().length);
+            exchange.getResponseBody().write(html.toString().getBytes());
+            exchange.close();
+        });   
 
         server.start();
         System.out.println("Servidor em http://localhost:8080");
