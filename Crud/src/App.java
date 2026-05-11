@@ -101,7 +101,7 @@ public class App {
 
 
 
-//// LISTA
+    //// LISTA
 
         server.createContext("/clientes", exchange -> {
             StringBuilder html = new StringBuilder();
@@ -190,9 +190,7 @@ public class App {
 
         server.createContext("/novo", exchange -> {
             StringBuilder html = new StringBuilder();
-
             html.append("""
-
                 <html>
                 <head>
                     <meta charset="UTF-8">
@@ -232,10 +230,8 @@ public class App {
 
 
 
-          // GUARDAR NOVO CLIENTE
-
+    // GUARDAR NOVO CLIENTE
         server.createContext("/guardar", exchange -> {
-
             if (!exchange.getRequestMethod().equalsIgnoreCase("POST")) {
                 exchange.sendResponseHeaders(405, -1);
                 return;
@@ -273,23 +269,16 @@ public class App {
                 }
 
                 String sql = "INSERT INTO clientes(nome,email,telefone) VALUES (?,?,?)";
-
                 PreparedStatement ps = con.prepareStatement(sql);
-
                 ps.setString(1, nome);
                 ps.setString(2, email);
                 ps.setString(3, telefone);
 
-
                 ps.executeUpdate();
-
                 ps.close();
-
                 con.close();
 
-
                 // HTML de sucesso 
-
                 html.append("""
 
                     <html>
@@ -306,7 +295,6 @@ public class App {
                     <h2>:-) Cliente guardado com sucesso!</h2>
                     <a href='/clientes'>Ver lista</a><br><br>
                     <a href='/novo'>Inserir novo cliente</a>
-
                     </body>
                     </html>
                 """);
@@ -314,18 +302,14 @@ public class App {
             } catch (Exception e) {
 
                 e.printStackTrace();
-
                 html.append("""
-
                     <html>
                     <head>
                         <meta charset="UTF-8">
                     </head>
                     <body>
-
                     <h2>!! Erro ao guardar cliente!</h2>
                     <a href='/novo'>Voltar</a>
-
                     </body>
                     </html>
                 """);
@@ -339,9 +323,7 @@ public class App {
 
 
     // FORM EDITAR
-
         server.createContext("/editar", exchange -> {
-
         StringBuilder html = new StringBuilder();
 
         try {
@@ -352,7 +334,6 @@ public class App {
             }
 
             int id = Integer.parseInt(query.split("=")[1]);
-
             Connection con = LigacaoBD.ligar();
 
             if (con == null) {
@@ -360,11 +341,8 @@ public class App {
             }
 
             String sql = "SELECT * FROM clientes WHERE id=?";
-
             PreparedStatement ps = con.prepareStatement(sql);
-
             ps.setInt(1, id);
-
             ResultSet rs = ps.executeQuery();
 
             if (!rs.next()) {
@@ -374,7 +352,6 @@ public class App {
             String nome = rs.getString("nome");
             String email = rs.getString("email");
             String telefone = rs.getString("telefone");
-
 
             html.append("""
                 <html>
@@ -387,18 +364,15 @@ public class App {
                     </style>
                 </head>
                 <body>
-
                 <h2>Editar Cliente</h2>
                 <a href='/clientes'>« Voltar</a><br><br>
                 <form method='POST' action='/atualizar'>
             """);
 
-
             html.append("<input type='hidden' name='id' value='").append(id).append("'>");
             html.append("Nome:<input name='nome' value='").append(nome).append("' required>");
             html.append("Email:<input name='email' value='").append(email).append("' required>");
             html.append("Telefone:<input name='telefone' value='").append(telefone).append("'>");
-
             html.append("""
 
                 <button type='submit'>Atualizar</button>
@@ -511,8 +485,7 @@ public class App {
         }
     }); 
 
- // ELIMINAR CLIENTE
-
+    // ELIMINAR CLIENTE
         server.createContext("/apagar", exchange -> {
             StringBuilder html = new StringBuilder();
 
@@ -529,16 +502,11 @@ public class App {
                 if (con == null) {
                     throw new Exception("Ligação à BD falhou!");
                 }
-
                 String sql = "DELETE FROM clientes WHERE id=?";
                 PreparedStatement ps = con.prepareStatement(sql);
-
                 ps.setInt(1, id);
-
                 int rows = ps.executeUpdate();
-
                 ps.close();
-
                 con.close();
 
                 html.append("""
@@ -555,28 +523,23 @@ public class App {
                 """);
 
                 if (rows > 0) {
-
                     html.append("""
                         <h2>Cliente apagado com sucesso!</h2>
                         <a href='/clientes'>Voltar à lista</a>
                     """);
-
                 } else {
                     html.append("""
                         <h2>! Cliente não encontrado!</h2>
                         <a href='/clientes'>Voltar</a>
                     """);
                 }
-
                 html.append("""
 
                     </body>
                     </html>
                 """);
-
             } catch (Exception e) {
                 e.printStackTrace();
-
                 html.append("""
                     <html>
                     <head>
@@ -589,12 +552,10 @@ public class App {
                     </html>
                 """);
             }
-
             exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
             exchange.sendResponseHeaders(200, html.toString().getBytes().length);
             exchange.getResponseBody().write(html.toString().getBytes());
             exchange.close();
-
         });   
 
         server.start();
