@@ -1,5 +1,5 @@
 import com.sun.net.httpserver.HttpServer;
-// import java.io.OutputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,8 +13,7 @@ public class App {
         );
 
 
- /// HOME
-
+    /// HOME
         server.createContext("/", exchange -> {
 
 
@@ -127,6 +126,7 @@ public class App {
                     <table>
                         <tr>
                             <th>ID</th>
+                            <th>Nif</th>
                             <th>Nome</th>
                             <th>Email</th>
                             <th>Telefone</th>
@@ -151,9 +151,11 @@ public class App {
                     String nome = rs.getString("nome");
                     String email = rs.getString("email");
                     String telefone = rs.getString("telefone");
+                    String nif = rs.getString("nif");
 
                     html.append("<tr>");
                     html.append("<td>").append(id).append("</td>");
+                    html.append("<td>").append(nif).append("</td>");
                     html.append("<td>").append(nome).append("</td>");
                     html.append("<td>").append(email).append("</td>");
                     html.append("<td>").append(telefone).append("</td>");
@@ -207,6 +209,9 @@ public class App {
                 <h2>Novo Cliente</h2>
                 <a href='/clientes'>← Voltar à lista</a><br><br>
                 <form method='POST' action='/guardar'>
+                    Nif:
+                    <input name='nif' required>
+                    
                     Nome:
                     <input name='nome' required>
 
@@ -242,6 +247,7 @@ public class App {
                 // Ler body
                 String body = new String(exchange.getRequestBody().readAllBytes(), "UTF-8");
                 String[] params = body.split("&");
+                String nif = "";
                 String nome = "";
                 String email = "";
                 String telefone = "";
@@ -254,10 +260,10 @@ public class App {
                         String value = java.net.URLDecoder.decode(kv[1], "UTF-8");
 
                         switch (key) {
+                            case "nif": nif = value; break;
                             case "nome": nome = value; break;
                             case "email": email = value; break;
                             case "telefone": telefone = value; break;
-
                         }
                     }
                 }
@@ -268,11 +274,13 @@ public class App {
                     throw new Exception("Ligação à BD falhou!");
                 }
 
-                String sql = "INSERT INTO clientes(nome,email,telefone) VALUES (?,?,?)";
+                String sql = "INSERT INTO clientes(nif,nome,email,telefone) VALUES (?,?,?,?)";
                 PreparedStatement ps = con.prepareStatement(sql);
-                ps.setString(1, nome);
-                ps.setString(2, email);
-                ps.setString(3, telefone);
+                ps.setString(1, nif);
+                ps.setString(2, nome);
+                ps.setString(3, email);
+                ps.setString(4, telefone);
+
 
                 ps.executeUpdate();
                 ps.close();
@@ -349,6 +357,7 @@ public class App {
                 throw new Exception("Cliente não encontrado");
             }
 
+            String nif = rs.getString("nif");
             String nome = rs.getString("nome");
             String email = rs.getString("email");
             String telefone = rs.getString("telefone");
@@ -370,6 +379,7 @@ public class App {
             """);
 
             html.append("<input type='hidden' name='id' value='").append(id).append("'>");
+            html.append("Nif:<input name='nif' value='").append(nif).append("' required>");
             html.append("Nome:<input name='nome' value='").append(nome).append("' required>");
             html.append("Email:<input name='email' value='").append(email).append("' required>");
             html.append("Telefone:<input name='telefone' value='").append(telefone).append("'>");
@@ -417,6 +427,7 @@ public class App {
             String[] params = body.split("&");
             String idStr = "";
             String nome = "";
+            String nif = "";
             String email = "";
             String telefone = "";
 
@@ -430,6 +441,7 @@ public class App {
                     switch (key) {
 
                         case "id": idStr = value; break;
+                        case "nif": nif = value; break;
                         case "nome": nome = value; break;
                         case "email": email = value; break;
                         case "telefone": telefone = value; break;
@@ -444,13 +456,14 @@ public class App {
                 throw new Exception("Ligação à BD falhou!");
             }
 
-            String sql = "UPDATE clientes SET nome=?, email=?, telefone=? WHERE id=?";
+            String sql = "UPDATE clientes SET nome=?, email=?, telefone=?, nif=? WHERE id=?";
             PreparedStatement ps = con.prepareStatement(sql);
 
-            ps.setString(1, nome);
-            ps.setString(2, email);
-            ps.setString(3, telefone);
-            ps.setInt(4, id);
+            ps.setString(1, nif);
+            ps.setString(2, nome);
+            ps.setString(3, email);
+            ps.setString(4, telefone);
+            ps.setInt(5, id);
 
             ps.executeUpdate();
 
