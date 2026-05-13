@@ -742,7 +742,7 @@ public class App {
                     <input name='produto' required>
 
                     preco:
-                    <input name='preco' type= 'number' step= '0.01' required>
+                    <input name='preco' type= 'number' min=0 step= '0.01' required>
 
                     <button type='submit'>Guardar</button>
 
