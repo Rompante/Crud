@@ -114,7 +114,7 @@ public class App {
                             <div class="card c">
                                 <h3>+ Novo Produtos</h3>
                                 <p>Adicionar produto</p>
-                                <a href="/novo-produto">Criar</a>
+                                <a href="/produtonovo">Criar</a>
                             </div>
                     </div>
                 </body>
@@ -843,7 +843,7 @@ public class App {
                     <body>
 
                     <h2>!! Erro ao guardar produto!</h2>
-                    <a href='/novo-produto'>Voltar</a>
+                    <a href='/pro'>Voltar</a>
 
                     </body>
                     </html>
