@@ -9,7 +9,7 @@ import java.sql.Statement;
 public class App {
  public static void main(String[] args) throws Exception {
         HttpServer server = HttpServer.create(
-            new InetSocketAddress(8082), 0
+            new InetSocketAddress(8083), 0
         );
 
 /// HOME
@@ -1115,6 +1115,6 @@ public class App {
         
         
         server.start();
-        System.out.println("Servidor em http://localhost:8080");
+        System.out.println("Servidor em http://localhost:8083");
     }
 }
