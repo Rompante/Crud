@@ -1229,7 +1229,6 @@ public class App {
             exchange.close();
 
         });
-
 // FORM NOVA EQUIPA
     server.createContext("/equipanova", exchange -> {
             StringBuilder html = new StringBuilder();
@@ -1269,9 +1268,7 @@ public class App {
             exchange.getResponseBody().write(html.toString().getBytes());
             exchange.close();
         }); 
-
-
-    // GUARDAR NOVO PRODUTO
+ // GUARDAR NOVO PRODUTO
     server.createContext("/guardarequipa", exchange -> {
 
             if (!exchange.getRequestMethod().equalsIgnoreCase("POST")) {
@@ -1369,8 +1366,258 @@ public class App {
             exchange.getResponseBody().write(html.toString().getBytes());
             exchange.close();
         });
+// Editar equipa
+    server.createContext("/editar-equipa", exchange -> {
+
+            StringBuilder html = new StringBuilder();
+
+            try {
+                String query = exchange.getRequestURI().getQuery();
+
+                if (query == null || !query.contains("id=")) {
+                    throw new Exception("ID inválido");
+                }
+
+                int id = Integer.parseInt(query.split("=")[1]);
+
+                Connection con = LigacaoBD.ligar();
+
+                if (con == null) {
+                    throw new Exception("Ligação à BD falhou!");
+                }
+
+                String sql = "SELECT * FROM equipas WHERE id=?";
+
+                PreparedStatement ps = con.prepareStatement(sql);
+
+                ps.setInt(1, id);
+
+                ResultSet rs = ps.executeQuery();
+
+                if (!rs.next()) {
+                    throw new Exception("Equipa não encontrada");
+                }
+
+                String refequipa = rs.getString("refequipa");
+                String nome = rs.getString("nome");
+                int numJogadores = rs.getInt("numJogadores");
 
 
+                html.append("""
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <style>
+                            body { font-family: Arial; }
+                            input { width: 100%; padding: 8px; margin-bottom: 10px; }
+                            form { width: 300px; }
+                        </style>
+                    </head>
+                    <body>
+
+                    <h2>Editar Equipa</h2>
+                    <a href='/equipas'>« Voltar</a><br><br>
+                    <form method='POST' action='/atualizar-equipa'>
+                """);
+
+
+                html.append("<input type='hidden' name='id' value='").append(id).append("'>");
+                html.append("Referência:<input name='refequipa' value='").append(refequipa).append("' required>");
+                html.append("Nome:<input name='nome' value='").append(nome).append("' required>");
+                html.append("Número de Jogadores:<input name='numJogadores' value='").append(numJogadores).append("' required>");
+
+                html.append("""
+                    <button type='submit'>Atualizar</button>
+                    </form>
+                    </body>
+                    </html>
+                """);
+
+                rs.close();
+                ps.close();
+                con.close();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                html.append("""
+
+                    <html>
+                    <body>
+                    <h2>!Erro ao carregar equipa</h2>
+                    <a href='/equipas'>Voltar</a>
+                    </body>
+                    </html>
+                """);
+            }
+
+            exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
+            exchange.sendResponseHeaders(200, html.toString().getBytes().length);
+            exchange.getResponseBody().write(html.toString().getBytes());
+            exchange.close();
+        });
+// ATUALIZAR equipa
+    server.createContext("/atualizar-equipa", exchange -> {
+
+    if (!exchange.getRequestMethod().equalsIgnoreCase("POST")) {
+        exchange.sendResponseHeaders(405, -1);
+        return;
+    }
+
+    try {
+        String body = new String(exchange.getRequestBody().readAllBytes(), "UTF-8");
+        String[] params = body.split("&");
+        String idStr = "";
+        String nome = "";
+        int numJogadoresStr = 0;
+
+
+        for (String p : params) {
+            String[] kv = p.split("=");
+
+            if (kv.length == 2) {
+                String key = kv[0];
+                String value = java.net.URLDecoder.decode(kv[1], "UTF-8");
+
+                switch (key) {
+                    case "id": idStr = value; break;
+                    case "nome": nome = value; break;
+                    case "numJogadores": numJogadoresStr = Integer.parseInt(value); break;
+                }
+            }
+        }
+
+        int id = Integer.parseInt(idStr);
+        Connection con = LigacaoBD.ligar();
+
+        if (con == null) {
+            throw new Exception("Ligação à BD falhou!");
+        }
+
+        String sql = "UPDATE equipas SET nome=?, numJogadores=? WHERE id=?";
+        PreparedStatement ps = con.prepareStatement(sql);
+
+            ps.setString(1, nome);
+        ps.setInt(2, numJogadoresStr);
+        ps.setInt(3, id);
+
+        ps.executeUpdate();
+
+        ps.close();
+
+        con.close();
+
+        // Redirect (melhor UX)
+
+        exchange.getResponseHeaders().add("Location", "/equipas");
+        exchange.sendResponseHeaders(302, -1);
+        exchange.close();
+
+        return;
+
+    } catch (Exception e) {
+        e.printStackTrace();
+
+        String resp = """
+            <html>
+            <body>
+            <h2>!Erro ao atualizar equipa</h2>
+            <a href='/equipas'>Voltar</a>
+            </body>
+            </html>
+        """;
+
+        exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
+        exchange.sendResponseHeaders(200, resp.getBytes().length);
+        exchange.getResponseBody().write(resp.getBytes());
+        exchange.close();
+    }
+});
+// ELIMINAR EQUIPA
+ server.createContext("/apagar-equipa", exchange -> {
+            StringBuilder html = new StringBuilder();
+
+            try {
+                String query = exchange.getRequestURI().getQuery();
+
+                if (query == null || !query.contains("id=")) {
+                    throw new Exception("ID inválido");
+                }
+
+                int id = Integer.parseInt(query.split("=")[1]);
+                Connection con = LigacaoBD.ligar();
+
+                if (con == null) {
+                    throw new Exception("Ligação à BD falhou!");
+                }
+
+                String sql = "DELETE FROM equipas WHERE id=?";
+                PreparedStatement ps = con.prepareStatement(sql);
+
+                ps.setInt(1, id);
+
+                int rows = ps.executeUpdate();
+
+                ps.close();
+
+                con.close();
+
+                html.append("""
+
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <style>
+                            body { font-family: Arial; }
+                            a { text-decoration: none; }
+                        </style>
+                    </head>
+                    <body>
+                """);
+
+                if (rows > 0) {
+
+                    html.append("""
+                        <h2>Equipa apagada com sucesso!</h2>
+                        <a href='/equipas'>Voltar à lista</a>
+                    """);
+
+                } else {
+                    html.append("""
+                        <h2>! Equipa não encontrada!</h2>
+                        <a href='/equipas'>Voltar</a>
+                    """);
+                }
+
+                html.append("""
+
+                    </body>
+                    </html>
+                """);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+
+                html.append("""
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                    </head>
+                    <body>
+                    <h2>!!! Erro ao apagar equipa!</h2>
+                    <a href='/equipas'>Voltar</a>
+                    </body>
+                    </html>
+                """);
+            }
+
+            exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
+            exchange.sendResponseHeaders(200, html.toString().getBytes().length);
+            exchange.getResponseBody().write(html.toString().getBytes());
+            exchange.close();
+
+        });
+        
+        
         server.start();
         System.out.println("Servidor em http://localhost:8083");
     }
