@@ -86,6 +86,25 @@ public class App {
                             margin-top: 15px;
                         }
 
+                        .card d {
+                            display: block;
+                            text-decoration: none;
+                            color: white;
+                            background: #40739e;
+                            padding: 10px;
+                            border-radius: 5px;
+                            margin-top: 15px;
+                        }
+
+                        .card e {
+                            display: block;
+                            text-decoration: none;
+                            color: white;
+                            background: #40739e;
+                            padding: 10px;
+                            border-radius: 5px;
+                            margin-top: 15px;
+                        }
                     </style>
                 </head>
                 <body>
@@ -115,6 +134,18 @@ public class App {
                                 <h3>+ Novo Produtos</h3>
                                 <p>Adicionar produto</p>
                                 <a href="/produtonovo">Criar</a>
+                            </div>
+                    </div>
+                        <div class="container">
+                            <div class="card b">
+                                <h3>Ver Equipas</h3>
+                                <p>Consultar lista completa</p>
+                                <a href="/equipas">Abrir</a>
+                            </div>
+                            <div class="card c">
+                                <h3>+ Nova Equipa</h3>
+                                <p>Adicionar equipa</p>
+                                <a href="/equipanova">Criar</a>
                             </div>
                     </div>
                 </body>
@@ -630,6 +661,8 @@ public class App {
         });   
 
 
+
+
 //// PRODUTOS
         server.createContext("/produtos", exchange -> {
             StringBuilder html = new StringBuilder();
@@ -1113,7 +1146,231 @@ public class App {
 
         });
         
-        
+
+
+//// EQUIPA
+        server.createContext("/equipas", exchange -> {
+            StringBuilder html = new StringBuilder();
+
+                html.append("""
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <style>
+                            table { border-collapse: collapse; width: 100%; }
+
+                            th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+
+                            th { background-color: #f4f4f4; }
+
+                            a { text-decoration: none; margin-right: 10px; }
+
+                        </style>
+                    </head>
+                    <body>
+                    <h2>Lista de Equipas</h2>
+                    <a href='/equipanova'>+ Nova Equipa</a><br><br>
+                    <a href='/'>Voltar para o início</a><br><br>
+                    <table>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Numero de Jogadores</th>
+                            <th>Ações</th>
+                        </tr>
+                """);             
+
+            Connection con = LigacaoBD.ligar();
+
+            if (con == null) {
+                System.out.println("Erro: ligação falhou!");
+                return;
+            }   
+
+            try {
+
+                Statement st = con.createStatement();
+                ResultSet rs = st.executeQuery("SELECT * FROM equipas");
+
+                while (rs.next()) {
+                    int id = rs.getInt("id");
+                    String nome = rs.getString("nome");
+                    int numJogadores = rs.getInt("numJogadores");
+                    double preco = rs.getDouble("preco");
+
+                    html.append("<tr>");
+                    html.append("<td>").append(id).append("</td>");
+                    html.append("<td>").append(nome).append("</td>");
+                    html.append("<td>").append(numJogadores).append("</td>");
+                    html.append("<td>").append(preco).append("</td>");
+
+                    html.append("<td>");
+                    html.append("<a href='/editar-equipa?id=").append(id).append("'>Editar</a>");
+                    html.append("<a href='/apagar-equipa?id=").append(id)
+                        .append("' onclick=\"return confirm('Eliminar equipa?')\">Apagar</a>");
+                    html.append("</td>");
+
+                    html.append("</tr>");
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            html.append("""
+                </table>
+                </body>
+                </html>
+            """);
+
+            exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
+            exchange.sendResponseHeaders(200, html.toString().getBytes().length);
+            exchange.getResponseBody().write(html.toString().getBytes());
+            exchange.close();
+
+        });
+
+// FORM NOVA EQUIPA
+    server.createContext("/equipanova", exchange -> {
+            StringBuilder html = new StringBuilder();
+
+            html.append("""
+
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial; }
+                        form { width: 300px; }
+                        input { width: 100%; padding: 8px; margin-bottom: 10px; }
+                        button { padding: 8px 12px; }
+                        a { text-decoration: none; }
+
+                    </style>
+                </head>
+                <body>
+                <h2>Nova Equipa</h2>
+                <a href='/equipas'>← Voltar à lista</a><br><br>
+                <form method='POST' action='/guardarequipa'>
+                    nome:
+                    <input name='nome' required>
+
+                    numJogadores:
+                    <input name='numJogadores' type='number' min='0' required>
+
+                    <button type='submit'>Guardar</button>
+                </form>
+                </body>
+                </html>
+            """);
+
+            exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
+            exchange.sendResponseHeaders(200, html.toString().getBytes().length);
+            exchange.getResponseBody().write(html.toString().getBytes());
+            exchange.close();
+        }); 
+
+
+    // GUARDAR NOVO PRODUTO
+    server.createContext("/guardarequipa", exchange -> {
+
+            if (!exchange.getRequestMethod().equalsIgnoreCase("POST")) {
+                exchange.sendResponseHeaders(405, -1);
+                return;
+            }
+
+            StringBuilder html = new StringBuilder();
+            try {
+                // Ler body
+                String body = new String(exchange.getRequestBody().readAllBytes(), "UTF-8");
+                String[] params = body.split("&");
+                String refequipa = "";                
+                String nome = "";
+                int numJogadores = 0;
+
+                for (String p : params) {
+                    String[] kv = p.split("=");
+
+                    if (kv.length == 2) {
+                        String key = kv[0];
+                        String value = java.net.URLDecoder.decode(kv[1], "UTF-8");
+
+                        switch (key) {
+                            case "refequipa": refequipa = value; break;
+                            case "nome": nome = value; break;
+                            case "numJogadores": numJogadores = Integer.parseInt(value); break;
+                        }
+                    }
+                }
+
+                Connection con = LigacaoBD.ligar();
+
+                if (con == null) {
+                    throw new Exception("Ligação à BD falhou!");
+                }
+
+                String sql = "INSERT INTO equipas(refequipa,nome,numJogadores) VALUES (?,?,?)";
+
+                PreparedStatement ps = con.prepareStatement(sql);
+
+                ps.setString(1, refequipa);
+                ps.setString(2, nome);
+                ps.setInt(3, numJogadores);
+
+                ps.executeUpdate();
+                ps.close();
+                con.close();
+
+                // HTML de sucesso 
+
+                html.append("""
+
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <style>
+                            body { font-family: Arial; }
+
+                            a { text-decoration: none; }
+
+                        </style>
+                    </head>
+                    <body>
+                    <h2>:-) Equipa guardada com sucesso!</h2>
+                    <a href='/equipas'>Ver lista</a><br><br>
+                    <a href='/nova-equipa'>Inserir nova equipa</a>
+
+                    </body>
+                    </html>
+                """);
+
+            } catch (Exception e) {
+
+                e.printStackTrace();
+
+                html.append("""
+
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                    </head>
+                    <body>
+
+                    <h2>!! Erro ao guardar equipa!</h2>
+                    <a href='/equipas'>Voltar</a>
+
+                    </body>
+                    </html>
+                """);
+            }
+
+            exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
+            exchange.sendResponseHeaders(200, html.toString().getBytes().length);
+            exchange.getResponseBody().write(html.toString().getBytes());
+            exchange.close();
+        });
+
+
         server.start();
         System.out.println("Servidor em http://localhost:8083");
     }
